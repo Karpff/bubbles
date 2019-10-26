@@ -1,0 +1,207 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Bubbles v2</title>
+	<style>
+		html, body
+		{
+			margin: 0;
+			padding: 0;
+			overflow: hidden;
+		}
+		#bblbtn
+		{
+			position: absolute;
+			right: 20px;
+			top: 20px;
+		}
+		#qltbtn
+		{
+			position: absolute;
+			right: 20px;
+			bottom: 20px;
+			opacity: 0.8;
+		}
+		#qltbtn:hover
+		{
+			opacity: 1;
+		}
+	</style>
+</head>
+<body>
+	<canvas id="cnvs"></canvas>
+	<button id="bblbtn">Bombelki!</button>
+	<button id="qltbtn">Quality</button>
+	
+	<script>
+	
+	var canvas = document.getElementById("cnvs");
+	var c = canvas.getContext("2d");
+	canvas.width = window.innerWidth;
+	canvas.height = window.innerHeight;
+	
+	var mouseX;
+	var mouseY;
+	var creating = 0;
+	var weak = false;
+	var meanDropAmount = 15;
+	
+	window.addEventListener('mousemove', function(e)
+	{
+		mouseX = e.x;
+		mouseY = e.y;
+	});
+	
+	window.addEventListener('mousedown', function(e)
+	{
+		poppin = 1;
+	});
+	
+	window.addEventListener('mouseup', function(e)
+	{
+		poppin = 0;
+	});
+	
+	document.getElementById("bblbtn").addEventListener('mousedown', function()
+	{
+		creating = 1;
+	});
+	
+	document.getElementById("bblbtn").addEventListener('mouseup', function()
+	{
+		creating = 0;
+	});
+	
+	document.getElementById("qltbtn").addEventListener('mousedown', function()
+	{
+		if(weak){weak=false; meanDropAmount=15;}else{weak=true; meanDropAmount=9;}
+	});
+	
+	function bubble()
+	{
+		this.x = 0;
+		this.y = 0;
+		this.maxSize = Math.random()*30+20;
+		this.size = 0;
+		this.spdX = Math.random()*3+0.1;
+		this.spdY = Math.random()*3+0.1;
+		
+		
+		this.update = function()
+		{
+			this.x += this.spdX;
+			this.spdX -= this.spdX * 0.001;
+			this.y += this.spdY;
+			this.spdY -= this.spdY * 0.001;
+			if(this.size < this.maxSize)this.size += 0.3;
+			if(this.x > canvas.width - this.size && this.spdX > 0)this.spdX = -this.spdX;
+			if(this.x < this.size && this.spdX < 0)this.spdX = -this.spdX;
+			if(this.y > canvas.height - this.size && this.spdY > 0)this.spdY = -this.spdY;
+			if(this.y < this.size && this.spdY < 0)this.spdY = -this.spdY;
+			this.draw();
+		}
+		
+		this.draw = function()
+		{
+			c.beginPath();
+			c.arc(this.x,this.y,this.size,0,Math.PI*2);
+			c.strokeStyle = "#0099FF";
+			c.lineWidth = "1";
+			c.stroke();
+			if(!weak)
+			{
+				c.fillStyle = "rgba(0,100,255,0.1)";
+				c.fill();
+				c.beginPath();
+				c.arc(this.x,this.y,this.size*0.8,Math.PI*1.65,Math.PI*1.9);
+				c.strokeStyle = "white";
+				c.lineWidth = "3";
+				c.stroke();
+			}
+		}
+	}
+	
+	function pop(x,y)
+	{
+		var dropNr = Math.floor(Math.random()*meanDropAmount+meanDropAmount/3)
+		var a = x;
+		var b = y;
+		while(dropNr > 0)
+		{
+			drops.push(new drop(a,b));
+			dropNr--;
+		}
+	}
+	
+	function drop(x,y)
+	{
+		this.x = x;
+		this.y = y;
+		this.size = Math.random()*0.8 + 0.5;
+		this.spdY = Math.random()*4-2;
+		this.spdX = Math.random()*4-2;
+		
+		this.update = function()
+		{
+			this.x += this.spdX;
+			this.y += this.spdY;
+			this.size -= 0.01;
+			if(this.size > 0)
+			{
+				this.draw();
+			}
+		}
+		
+		this.draw = function()
+		{
+			c.beginPath();
+			c.arc(this.x,this.y,this.size,0,Math.PI*2);
+			c.fillStyle = "#0099FF";
+			c.fill();
+		}
+	}
+	
+	var bubbles = [];
+	var drops = [];
+	
+	function animate()
+	{
+		requestAnimationFrame(animate);
+		c.clearRect(0,0,canvas.width,canvas.height);
+		if(creating == 1)
+		{
+			bubbles.push(new bubble());
+		}
+		for(var i=0;i<bubbles.length;i++)
+		{
+			bubbles[i].update();
+		}
+		for(var i=0;i<drops.length;i++)
+		{
+			drops[i].update();
+		}
+		
+		if(poppin == 1)
+		{
+			var x = mouseX;
+			var y = mouseY;
+			for(var i=0;i<bubbles.length;i++)
+			{
+				distance = Math.sqrt(Math.abs(bubbles[i].x - x) * Math.abs(bubbles[i].x - x) + Math.abs(bubbles[i].y - y) * Math.abs(bubbles[i].y - y));
+				if(distance < bubbles[i].size)
+				{
+					bubbles[i].size = 0;
+					bubbles[i].maxSize = 0;
+					pop(bubbles[i].x, bubbles[i].y);
+				}
+			}
+		}
+	}
+	
+	animate();
+	
+	</script>
+	
+</body>
+</html>
